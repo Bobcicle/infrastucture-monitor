@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-
+from app.api.routes import hosts, metrics
 from app.api.routes import hosts
 
 
@@ -12,6 +12,11 @@ app = FastAPI(
 
 app.include_router(
     hosts.router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    metrics.router,
     prefix="/api/v1",
 )
 
