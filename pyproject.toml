@@ -1,0 +1,16 @@
+[project]
+name = "infrastructure-monitor"
+version = "0.1.0"
+description = "Infrastructure monitoring API built with Python and FastAPI"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+    "ruff",
+]
