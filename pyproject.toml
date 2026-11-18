@@ -1,12 +1,16 @@
 [project]
 name = "infrastructure-monitor"
 version = "0.1.0"
-description = "Infrastructure monitoring API built with Python and FastAPI"
+description = "Infrastructure monitoring API"
 requires-python = ">=3.11"
+
 dependencies = [
     "fastapi",
     "uvicorn[standard]",
     "psutil",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings",
 ]
 
 [project.optional-dependencies]
@@ -14,4 +18,5 @@ dev = [
     "pytest",
     "httpx",
     "ruff",
+    "alembic",
 ]

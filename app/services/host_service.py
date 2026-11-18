@@ -1,36 +1,42 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.host import Host
 from app.schemas.host import HostCreate
 
 
-hosts: dict[int, dict] = {}
+def create_host(db: Session, host_data: HostCreate) -> Host:
+    host = Host(
+        hostname=host_data.hostname,
+        ip_address=str(host_data.ip_address),
+        operating_system=host_data.operating_system,
+        status="unknown",
+    )
 
-next_host_id = 1
-
-
-def create_host(host_data: HostCreate) -> dict:
-    global next_host_id
-
-    host = {
-        "id": next_host_id,
-        "hostname": host_data.hostname,
-        "ip_address": str(host_data.ip_address),
-        "operating_system": host_data.operating_system,
-        "status": "unknown",
-    }
-
-    hosts[next_host_id] = host
-
-    next_host_id += 1
+    db.add(host)
+    db.commit()
+    db.refresh(host)
 
     return host
 
 
-def get_hosts() -> list[dict]:
-    return list(hosts.values())
+def get_hosts(db: Session) -> list[Host]:
+    statement = select(Host).order_by(Host.id)
+
+    return list(db.scalars(statement).all())
 
 
-def get_host(host_id: int) -> dict | None:
-    return hosts.get(host_id)
+def get_host(db: Session, host_id: int) -> Host | None:
+    return db.get(Host, host_id)
 
 
-def delete_host(host_id: int) -> bool:
-    return hosts.pop(host_id, None) is not None
+def delete_host(db: Session, host_id: int) -> bool:
+    host = db.get(Host, host_id)
+
+    if host is None:
+        return False
+
+    db.delete(host)
+    db.commit()
+
+    return True

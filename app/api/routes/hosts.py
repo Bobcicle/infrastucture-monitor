@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
+from app.db.session import get_db
 from app.schemas.host import HostCreate, HostResponse
 from app.services import host_service
 
@@ -15,24 +18,38 @@ router = APIRouter(
     response_model=HostResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def register_host(host_data: HostCreate):
-    return host_service.create_host(host_data)
+def register_host(
+    host_data: HostCreate,
+    db: Session = Depends(get_db),
+):
+    try:
+        return host_service.create_host(db, host_data)
+    except IntegrityError:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A host with this hostname already exists",
+        )
 
 
 @router.get(
     "",
     response_model=list[HostResponse],
 )
-def list_hosts():
-    return host_service.get_hosts()
+def list_hosts(db: Session = Depends(get_db)):
+    return host_service.get_hosts(db)
 
 
 @router.get(
     "/{host_id}",
     response_model=HostResponse,
 )
-def retrieve_host(host_id: int):
-    host = host_service.get_host(host_id)
+def retrieve_host(
+    host_id: int,
+    db: Session = Depends(get_db),
+):
+    host = host_service.get_host(db, host_id)
 
     if host is None:
         raise HTTPException(
@@ -47,8 +64,11 @@ def retrieve_host(host_id: int):
     "/{host_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-def remove_host(host_id: int):
-    deleted = host_service.delete_host(host_id)
+def remove_host(
+    host_id: int,
+    db: Session = Depends(get_db),
+):
+    deleted = host_service.delete_host(db, host_id)
 
     if not deleted:
         raise HTTPException(
